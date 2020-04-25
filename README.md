@@ -37,18 +37,18 @@ Usage of ./cpucheck:
 ### Example
 
 ```
-./cpucheck
+/cpucheck 
 Processors      4
 Op. system      linux
 Architecture    amd64
 Data size       65536 bytes
 Duration        10 seconds
-. . . . . . . . . . .
+. . . . . . . . . .
 Results
-Worker 1        1086
-Worker 4        1073
-Worker 2        1085
-Worker 3        1084
+Worker 1        1094
+Worker 2        1088
+Worker 3        1087
+Worker 4        1080
 ---
-Total   4328
+Total   4349
 ```
