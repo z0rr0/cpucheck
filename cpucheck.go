@@ -11,7 +11,7 @@ import (
 
 const (
 	// processes per operation
-	perProcess = 10
+	perOperation = 10
 	// changeData is data size difference
 	changeData = 100
 )
@@ -75,7 +75,7 @@ func main() {
 	for i := 0; i < numProc; i++ {
 		done[i] = make(chan struct{})
 		w := Worker{ID: i + 1, In: sourceCh, Out: resultCh, Done: done[i]}
-		go Work(w, perProcess)
+		go Work(w, perOperation)
 	}
 	period := time.Second * time.Duration(*timeout)
 	ticker := time.NewTicker(period)
