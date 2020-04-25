@@ -21,7 +21,7 @@ type Worker struct {
 	ID   int
 	In   <-chan []byte
 	Out  chan<- int
-	Done chan<- struct{}
+	Done chan struct{}
 }
 
 // Process is main CPU load process.
@@ -75,7 +75,7 @@ func main() {
 	// run workers
 	for i := 0; i < numProc; i++ {
 		done[i] = make(chan struct{})
-		w := Worker{ID: i + 1, In: sourceCh, Out: resultCh, Done: done[i]}
+		w := Worker{ID: i, In: sourceCh, Out: resultCh, Done: done[i]}
 		go Work(w, perOperation)
 	}
 	period := time.Second * time.Duration(*timeout)
@@ -90,26 +90,24 @@ func main() {
 	go func() {
 		for {
 			select {
-			// wait timeout
-			case <-ticker.C:
+			case <-ticker.C: // wait timeout
 				close(sourceCh)
 				return
-				// show second dot
-			case <-secTicker.C:
+			case <-secTicker.C: // show second dot
 				fmt.Printf(". ")
 			default:
 				sourceCh <- Generate(source, *size, maxBytes)
 			}
 		}
 	}()
-	total := make(map[int]uint)
-	// get workers results
+	total := make([]uint, numProc)
+	// aggregate workers results
 	go func() {
-		for id := range resultCh {
-			total[id] += 1
+		for i := range resultCh {
+			total[i]++
 		}
 	}()
-	// wait processes finish
+	// wait all processes finish
 	for i := range done {
 		<-done[i]
 	}
@@ -117,7 +115,7 @@ func main() {
 	// show result
 	fmt.Println("\nResults")
 	for k, v := range total {
-		fmt.Printf("Worker %d\t%d\n", k, v)
+		fmt.Printf("Worker %d\t%d\n", k+1, v)
 		totalCounter += v
 	}
 	fmt.Printf("---\nTotal\t%d\n", totalCounter)
