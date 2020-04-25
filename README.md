@@ -37,7 +37,7 @@ Usage of ./cpucheck:
 ### Example
 
 ```
-/cpucheck 
+./cpucheck
 Processors      4
 Op. system      linux
 Architecture    amd64
