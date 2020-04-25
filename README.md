@@ -28,7 +28,7 @@ GOOS=darwin GOARCH=amd64 go build -o cpucheck_macos .
 ```
 Usage of ./cpucheck:
   -s int
-        data size (default 1024)
+        data size (default 65536)
   -t int
         time duration (seconds) (default 10)
 ```
