@@ -4,6 +4,7 @@ It is an easy CPU check tool.
 
 - There are N workers (where N is runtime.NumCPU).
 - A worker gets pseudo random bytes and calculates SHA-256 sum for it.
+- The cycle repeats for every worker during the time period.
 
 ### Build
 
