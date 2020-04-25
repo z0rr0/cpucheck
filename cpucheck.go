@@ -59,11 +59,12 @@ func main() {
 	timeout := flag.Int("t", 10, "time duration (seconds)")
 	flag.Parse()
 
-	numProc := runtime.GOMAXPROCS(-1)
+	numProc := runtime.NumCPU()
 	fmt.Printf("Processors\t%d\n", numProc)
-	fmt.Printf("Data size\t%d\n", *size)
+	fmt.Printf("Op. system\t%s\n", runtime.GOOS)
+	fmt.Printf("Architecture\t%s\n", runtime.GOARCH)
+	fmt.Printf("Data size\t%d bytes\n", *size)
 	fmt.Printf("Duration\t%d seconds\n", *timeout)
-	fmt.Println("---")
 
 	maxBytes := *size + changeData
 	source := rand.NewSource(int64(time.Nanosecond))
@@ -79,7 +80,12 @@ func main() {
 	}
 	period := time.Second * time.Duration(*timeout)
 	ticker := time.NewTicker(period)
-	defer ticker.Stop()
+	secTicker := time.NewTicker(time.Second)
+	defer func() {
+		ticker.Stop()
+		secTicker.Stop()
+	}()
+	fmt.Printf(". ")
 	// send tasks to workers
 	go func() {
 		for {
@@ -88,6 +94,9 @@ func main() {
 			case <-ticker.C:
 				close(sourceCh)
 				return
+				// show second dot
+			case <-secTicker.C:
+				fmt.Printf(". ")
 			default:
 				sourceCh <- Generate(source, *size, maxBytes)
 			}
@@ -101,12 +110,12 @@ func main() {
 		}
 	}()
 	// wait processes finish
-	for i := 0; i < numProc; i++ {
+	for i := range done {
 		<-done[i]
 	}
 	close(resultCh)
 	// show result
-	fmt.Println("Results")
+	fmt.Println("\nResults")
 	for k, v := range total {
 		fmt.Printf("Worker %d\t%d\n", k, v)
 		totalCounter += v
