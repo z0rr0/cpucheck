@@ -64,7 +64,7 @@ func main() {
 	fmt.Printf("Op. system\t%s\n", runtime.GOOS)
 	fmt.Printf("Architecture\t%s\n", runtime.GOARCH)
 	fmt.Printf("Data size\t%d bytes\n", *size)
-	fmt.Printf("Duration\t%d seconds\n", *timeout)
+	fmt.Printf("Duration\t%d seconds\n.", *timeout)
 
 	maxBytes := *size + changeData
 	source := rand.NewSource(int64(time.Nanosecond))
@@ -85,7 +85,6 @@ func main() {
 		ticker.Stop()
 		secTicker.Stop()
 	}()
-	fmt.Printf(". ")
 	// send tasks to workers
 	go func() {
 		for {
@@ -94,7 +93,7 @@ func main() {
 				close(sourceCh)
 				return
 			case <-secTicker.C: // show second dot
-				fmt.Printf(". ")
+				fmt.Printf(" .")
 			default:
 				sourceCh <- Generate(source, *size, maxBytes)
 			}
