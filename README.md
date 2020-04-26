@@ -28,8 +28,10 @@ GOOS=darwin GOARCH=amd64 go build -o cpucheck_macos .
 
 ```
 Usage of ./cpucheck:
+  -a string
+        algorithm (sha256, md5, gzip) (default "sha256")
   -s int
-        data size (default 65536)
+        data size (bytes) (default 65536)
   -t int
         time duration (seconds) (default 10)
 ```
@@ -37,18 +39,18 @@ Usage of ./cpucheck:
 ### Example
 
 ```
-./cpucheck
 Processors      4
 Op. system      linux
 Architecture    amd64
+Algorithm       sha256
 Data size       65536 bytes
 Duration        10 seconds
 . . . . . . . . . .
 Results
-Worker 1        1094
-Worker 2        1088
-Worker 3        1087
-Worker 4        1080
+Worker 1        1045
+Worker 2        1020
+Worker 3        1009
+Worker 4        1013
 ---
-Total   4349
+Total   4087
 ```
