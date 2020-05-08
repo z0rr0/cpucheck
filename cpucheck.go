@@ -18,7 +18,7 @@ const (
 	iterationsSHA256 = 10
 	iterationsMD5    = 60
 	iterationsGZIP   = 3
-	// changeData is data size difference
+	// changeData is init data size difference
 	changeData = 100
 )
 
@@ -39,43 +39,42 @@ type Worker struct {
 	Handler func(data []byte)
 }
 
-// ProcessSHA256 is SHA-256 CPU load process.
-func ProcessSHA256(data []byte) {
+// mixData modifies processing data by random bytes.
+func mixData(data []byte, m int) {
 	var idx, b int
 	n := len(data)
-	for i := 0; i < iterationsSHA256; i++ {
-		sha256.Sum256(data)
+	for i := 0; i < m; i++ {
 		idx, b = rand.Intn(n), rand.Intn(256)
 		data[idx] = byte(b)
+	}
+}
+
+// ProcessSHA256 is SHA-256 CPU load process.
+func ProcessSHA256(data []byte) {
+	for i := 0; i < iterationsSHA256; i++ {
+		sha256.Sum256(data)
+		mixData(data, 1)
 	}
 }
 
 // ProcessMD5 is MD5 CPU load process.
 func ProcessMD5(data []byte) {
-	var idx, b int
-	n := len(data)
 	for i := 0; i < iterationsMD5; i++ {
 		md5.Sum(data)
-		idx, b = rand.Intn(n), rand.Intn(256)
-		data[idx] = byte(b)
+		mixData(data, 1)
 	}
 }
 
 // ProcessGZIP is gzip compression CPU load process.
 func ProcessGZIP(data []byte) {
-	var (
-		idx, b int
-		buf    bytes.Buffer
-	)
+	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
-	n := len(data)
 	for i := 0; i < iterationsGZIP; i++ {
 		if _, err := zw.Write(data); err != nil {
 			fmt.Printf("failed gzip write: %v\n", err)
 			return
 		}
-		idx, b = rand.Intn(n), rand.Intn(256)
-		data[idx] = byte(b)
+		mixData(data, 10)
 	}
 	if err := zw.Close(); err != nil {
 		fmt.Printf("failed gzip proccess closing: %v\n", err)
@@ -125,6 +124,7 @@ func main() {
 
 	sourceCh := make(chan []byte)
 	resultCh := make(chan int)
+	resultDone := make(chan struct{})
 	done := make([]chan struct{}, numProc)
 	// run workers
 	for i := 0; i < numProc; i++ {
@@ -159,12 +159,15 @@ func main() {
 		for i := range resultCh {
 			total[i]++
 		}
+		close(resultDone)
 	}()
 	// wait all processes finish
 	for i := range done {
 		<-done[i]
 	}
 	close(resultCh)
+	// wait all totals count
+	<-resultDone
 	// show result
 	fmt.Println("\nResults")
 	for k, v := range total {
