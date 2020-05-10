@@ -147,26 +147,38 @@ func ShowResults(total []uint, timeout int, w io.Writer) error {
 	return err
 }
 
-func main() {
-	size := flag.Int("s", defaultDataSize, "data size (bytes)")
-	timeout := flag.Int("t", 10, "time duration (seconds)")
-	algorithm := flag.String("a", "sha256", "algorithm (sha256, md5, gzip)")
-	flag.Parse()
-
-	handler, ok := algorithms[*algorithm]
+// Run does algorithm processing.
+func Run(size, timeout, numProc int, algorithm string, w io.Writer) error {
+	var err error
+	handler, ok := algorithms[algorithm]
 	if !ok {
-		fmt.Printf("ERROR: unknown algorithm \"%v\"\n", *algorithm)
-		os.Exit(1)
+		return fmt.Errorf("unknown algorithm \"%v\"", algorithm)
 	}
-	numProc := runtime.NumCPU()
-	fmt.Printf("Processors\t%d\n", numProc)
-	fmt.Printf("Op. system\t%s\n", runtime.GOOS)
-	fmt.Printf("Architecture\t%s\n", runtime.GOARCH)
-	fmt.Printf("Algorithm\t%s\n", *algorithm)
-	fmt.Printf("Data size\t%d bytes\n", *size)
-	fmt.Printf("Duration\t%d seconds\n.", *timeout)
-
-	maxBytes := *size + changeData
+	_, err = fmt.Fprintf(w, "\nProcessors\t%d\n", numProc)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Op. system\t%s\n", runtime.GOOS)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Architecture\t%s\n", runtime.GOARCH)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Algorithm\t%s\n", algorithm)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Data size\t%d bytes\n", size)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Duration\t%d seconds\n.", timeout)
+	if err != nil {
+		return err
+	}
+	maxBytes := size + changeData
 	source := rand.NewSource(int64(time.Nanosecond))
 
 	sourceCh := make(chan []byte)
@@ -179,7 +191,7 @@ func main() {
 		w := Worker{ID: i, In: sourceCh, Out: resultCh, Done: done[i], Handler: handler}
 		go Work(w)
 	}
-	period := time.Second * time.Duration(*timeout)
+	period := time.Second * time.Duration(timeout)
 	ticker := time.NewTicker(period)
 	secTicker := time.NewTicker(time.Second)
 	defer func() {
@@ -196,7 +208,7 @@ func main() {
 			case <-secTicker.C: // show second dot
 				fmt.Printf(" .")
 			default:
-				sourceCh <- Generate(source, *size, maxBytes)
+				sourceCh <- Generate(source, size, maxBytes)
 			}
 		}
 	}()
@@ -215,8 +227,31 @@ func main() {
 	close(resultCh)
 	// wait all totals count
 	<-resultDone
-	err := ShowResults(total, *timeout, os.Stdout)
-	if err != nil {
-		fmt.Printf("ERROR: failed result show %v\n", err)
+	return ShowResults(total, timeout, w)
+}
+
+func main() {
+	var knownAlgorithms = []string{"sha256", "md5", "gzip"}
+
+	size := flag.Int("s", defaultDataSize, "data size (bytes)")
+	timeout := flag.Int("t", 10, "time duration (seconds)")
+	algorithm := flag.String("a", "sha256", "algorithm (sha256, md5, gzip, all)")
+	flag.Parse()
+
+	if *timeout < 1 {
+		fmt.Printf("ERROR: timeout must be positive, but value is %v\n", *timeout)
+		os.Exit(2)
+	}
+	if *algorithm != "all" {
+		// use only one value
+		knownAlgorithms = []string{*algorithm}
+	}
+	numProc := runtime.NumCPU()
+	for _, a := range knownAlgorithms {
+		err := Run(*size, *timeout, numProc, a, os.Stdout)
+		if err != nil {
+			fmt.Printf("ERROR: %v\n", err)
+			os.Exit(2)
+		}
 	}
 }

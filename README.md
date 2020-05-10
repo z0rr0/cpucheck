@@ -39,7 +39,7 @@ go test -race -bench=. -benchmem -cover -v .
 ```
 Usage of ./cpucheck:
   -a string
-        algorithm (sha256, md5, gzip) (default "sha256")
+        algorithm (sha256, md5, gzip, all) (default "sha256")
   -s int
         data size (bytes) (default 65536)
   -t int

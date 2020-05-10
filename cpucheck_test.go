@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"math/rand"
+	"regexp"
 	"testing"
 	"time"
 )
@@ -60,6 +61,39 @@ func TestWork(t *testing.T) {
 		close(sourceCh)
 		<-done
 		close(resultCh)
+	}
+}
+
+func TestRun(t *testing.T) {
+	var b bytes.Buffer
+	handler := func(data []byte) {
+		time.Sleep(time.Millisecond * 1500)
+	}
+	// mock handler
+	algorithms["test"] = handler
+	err := Run(8, 1, 2, "test", &b)
+	if err != nil {
+		t.Error(err)
+	}
+	r := regexp.MustCompile(`^
+Processors	\d+
+Op. system	.+
+Architecture	.+
+Algorithm	test
+Data size	8 bytes
+Duration	1 seconds
+.
+Results
+Worker 1	\d+
+Worker 2	\d+
+---
+Total			3
+Avg per second		\d+
+Avg per processor	\d+
+Avg per proc/second	\d+
+$`)
+	if ok := r.Match(b.Bytes()); !ok {
+		t.Error("failed regexp match")
 	}
 }
 
