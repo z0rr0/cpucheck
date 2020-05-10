@@ -31,6 +31,7 @@ var (
 		"sha256": ProcessSHA256,
 		"md5":    ProcessMD5,
 		"gzip":   ProcessGZIP,
+		"test":   processTest, // test handler
 	}
 )
 
@@ -51,6 +52,11 @@ func mixData(data []byte, m int) {
 		idx, b = rand.Intn(n), rand.Intn(256)
 		data[idx] = byte(b)
 	}
+}
+
+// processTest is dummy handler only for test running.
+func processTest(data []byte) {
+	time.Sleep(time.Millisecond * 1500)
 }
 
 // ProcessSHA256 is SHA-256 CPU load process.

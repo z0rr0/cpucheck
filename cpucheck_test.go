@@ -46,6 +46,9 @@ func TestShowResults(t *testing.T) {
 func TestWork(t *testing.T) {
 	data := []byte{1, 2, 3}
 	for name, handler := range algorithms {
+		if name == "test" {
+			continue // it will be used in TestRun
+		}
 		t.Logf("check %v\n", name)
 		sourceCh := make(chan []byte)
 		resultCh := make(chan int)
@@ -66,11 +69,6 @@ func TestWork(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	var b bytes.Buffer
-	handler := func(data []byte) {
-		time.Sleep(time.Millisecond * 1500)
-	}
-	// mock handler
-	algorithms["test"] = handler
 	err := Run(8, 1, 2, "test", &b)
 	if err != nil {
 		t.Error(err)
