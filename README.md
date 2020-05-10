@@ -24,6 +24,12 @@ GOOS=windows GOARCH=amd64 go build -o cpucheck_windows.exe .
 GOOS=darwin GOARCH=amd64 go build -o cpucheck_macos .
 ```
 
+### Test
+
+```
+go test -race -bench=. -benchmem -cover -v .
+```
+
 ### Parameters
 
 ```

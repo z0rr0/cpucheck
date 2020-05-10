@@ -7,6 +7,8 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"io"
+	"math"
 	"math/rand"
 	"os"
 	"runtime"
@@ -19,7 +21,9 @@ const (
 	iterationsMD5    = 60
 	iterationsGZIP   = 3
 	// changeData is init data size difference
-	changeData = 100
+	changeData = 16
+	// defaultDataSize is default bytes generation
+	defaultDataSize = 65536
 )
 
 var (
@@ -92,16 +96,59 @@ func Work(w Worker) {
 
 // Generate returns pseudo random bytes.
 func Generate(s rand.Source, min, max int) []byte {
+	var k int
 	r := rand.New(s)
-	k := r.Intn(max - min)
+	diff := max - min
+	if diff > 0 {
+		k = r.Intn(max - min)
+	}
 	b := make([]byte, min+k)
 	r.Read(b)
 	return b
 }
 
+// ShowResults calculates and print results.
+func ShowResults(total []uint, timeout int, w io.Writer) error {
+	var (
+		err          error
+		numProc      float64
+		totalCounter uint
+	)
+	_, err = fmt.Fprintln(w, "\nResults")
+	if err != nil {
+		return err
+	}
+	for k, v := range total {
+		if _, e := fmt.Fprintf(w, "Worker %d\t%d\n", k+1, v); e != nil {
+			err = e
+		}
+		totalCounter += v
+		numProc++
+	}
+	if err != nil {
+		return err
+	}
+	avgProc := float64(totalCounter) / numProc
+	avgSecond := float64(totalCounter) / float64(timeout)
+	avgProcSecond := avgSecond / numProc
+	_, err = fmt.Fprintf(w, "---\nTotal\t\t\t%d\n", totalCounter)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Avg per second\t\t%v\n", math.Round(avgSecond))
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Avg per processor\t%v\n", math.Round(avgProc))
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "Avg per proc/second\t%v\n", math.Round(avgProcSecond))
+	return err
+}
+
 func main() {
-	var totalCounter uint
-	size := flag.Int("s", 65536, "data size (bytes)")
+	size := flag.Int("s", defaultDataSize, "data size (bytes)")
 	timeout := flag.Int("t", 10, "time duration (seconds)")
 	algorithm := flag.String("a", "sha256", "algorithm (sha256, md5, gzip)")
 	flag.Parse()
@@ -168,11 +215,8 @@ func main() {
 	close(resultCh)
 	// wait all totals count
 	<-resultDone
-	// show result
-	fmt.Println("\nResults")
-	for k, v := range total {
-		fmt.Printf("Worker %d\t%d\n", k+1, v)
-		totalCounter += v
+	err := ShowResults(total, *timeout, os.Stdout)
+	if err != nil {
+		fmt.Printf("ERROR: failed result show %v\n", err)
 	}
-	fmt.Printf("---\nTotal\t%d\n", totalCounter)
 }
