@@ -49,8 +49,10 @@ func TestWork(t *testing.T) {
 		sourceCh := make(chan []byte)
 		resultCh := make(chan int)
 		done := make(chan struct{})
+
 		w := Worker{ID: 1, In: sourceCh, Out: resultCh, Done: done, Handler: handler}
 		go Work(w)
+
 		sourceCh <- data
 		if i := <-resultCh; i != w.ID {
 			t.Errorf("failed result [%v] %v != %v\n", name, i, w.ID)
@@ -58,7 +60,6 @@ func TestWork(t *testing.T) {
 		close(sourceCh)
 		<-done
 		close(resultCh)
-
 	}
 }
 

@@ -1,5 +1,7 @@
 # CPUcheck
 
+![Go](https://github.com/z0rr0/cpucheck/workflows/Go/badge.svg)
+
 It is an easy CPU check tool.
 
 - There are N workers (where N is runtime.NumCPU).
@@ -25,6 +27,8 @@ GOOS=darwin GOARCH=amd64 go build -o cpucheck_macos .
 ```
 
 ### Test
+
+Github Actions is running for every master git-push.
 
 ```
 go test -race -bench=. -benchmem -cover -v .
@@ -53,10 +57,13 @@ Data size       65536 bytes
 Duration        10 seconds
 . . . . . . . . . .
 Results
-Worker 1        1045
-Worker 2        1020
-Worker 3        1009
-Worker 4        1013
+Worker 1        1038
+Worker 2        1029
+Worker 3        1038
+Worker 4        1016
 ---
-Total   4087
+Total                   4121
+Avg per second          412
+Avg per processor       1030
+Avg per proc/second     103
 ```
