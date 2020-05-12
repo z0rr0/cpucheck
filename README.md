@@ -1,6 +1,8 @@
 # CPUcheck
 
 ![Go](https://github.com/z0rr0/cpucheck/workflows/Go/badge.svg)
+![Version](https://img.shields.io/github/tag/z0rr0/cpucheck.svg)
+![License](https://img.shields.io/github/license/z0rr0/cpucheck.svg)
 
 It is an easy CPU check tool.
 
