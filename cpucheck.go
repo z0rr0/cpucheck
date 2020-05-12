@@ -54,6 +54,15 @@ func mixData(data []byte, m int) {
 	}
 }
 
+// Printf is fmt.Fprintf wrapper to don't check errors after each its call.
+func Printf(err error, w io.Writer, format string, a ...interface{}) error {
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, format, a...)
+	return err
+}
+
 // processTest is dummy handler only for test running.
 func processTest(data []byte) {
 	time.Sleep(time.Millisecond * 1500)
@@ -125,9 +134,7 @@ func ShowResults(total []uint, timeout int, w io.Writer) error {
 		return err
 	}
 	for k, v := range total {
-		if _, e := fmt.Fprintf(w, "Worker %d\t%d\n", k+1, v); e != nil {
-			err = e
-		}
+		err = Printf(err, w, "Worker %d\t%d\n", k+1, v)
 		totalCounter += v
 		numProc++
 	}
@@ -137,19 +144,10 @@ func ShowResults(total []uint, timeout int, w io.Writer) error {
 	avgProc := float64(totalCounter) / numProc
 	avgSecond := float64(totalCounter) / float64(timeout)
 	avgProcSecond := avgSecond / numProc
-	_, err = fmt.Fprintf(w, "---\nTotal\t\t\t%d\n", totalCounter)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Avg per second\t\t%v\n", math.Round(avgSecond))
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Avg per processor\t%v\n", math.Round(avgProc))
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Avg per proc/second\t%v\n", math.Round(avgProcSecond))
+	err = Printf(err, w, "---\nTotal\t\t\t%d\n", totalCounter)
+	err = Printf(err, w, "Avg per second\t\t%v\n", math.Round(avgSecond))
+	err = Printf(err, w, "Avg per processor\t%v\n", math.Round(avgProc))
+	err = Printf(err, w, "Avg per proc/second\t%v\n", math.Round(avgProcSecond))
 	return err
 }
 
@@ -160,27 +158,12 @@ func Run(size, timeout, numProc int, algorithm string, w io.Writer) error {
 	if !ok {
 		return fmt.Errorf("unknown algorithm \"%v\"", algorithm)
 	}
-	_, err = fmt.Fprintf(w, "\nProcessors\t%d\n", numProc)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Op. system\t%s\n", runtime.GOOS)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Architecture\t%s\n", runtime.GOARCH)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Algorithm\t%s\n", algorithm)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Data size\t%d bytes\n", size)
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintf(w, "Duration\t%d seconds\n.", timeout)
+	err = Printf(err, w, "\nProcessors\t%d\n", numProc)
+	err = Printf(err, w, "Op. system\t%s\n", runtime.GOOS)
+	err = Printf(err, w, "Architecture\t%s\n", runtime.GOARCH)
+	err = Printf(err, w, "Algorithm\t%s\n", algorithm)
+	err = Printf(err, w, "Data size\t%d bytes\n", size)
+	err = Printf(err, w, "Duration\t%d seconds\n.", timeout)
 	if err != nil {
 		return err
 	}
