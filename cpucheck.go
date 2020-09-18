@@ -54,7 +54,7 @@ func mixData(data []byte, m int) {
 	}
 }
 
-// Printf is fmt.Fprintf wrapper to don't check errors after each its call.
+// Printf is fmt.Fprintf wrapper to don't check errors after each call.
 func Printf(err error, w io.Writer, format string, a ...interface{}) error {
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func Printf(err error, w io.Writer, format string, a ...interface{}) error {
 }
 
 // processTest is dummy handler only for test running.
-func processTest(data []byte) {
+func processTest(_ []byte) {
 	time.Sleep(time.Millisecond * 1500)
 }
 
