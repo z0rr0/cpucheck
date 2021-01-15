@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"runtime"
+	"sort"
 	"time"
 )
 
@@ -219,25 +220,49 @@ func Run(size, timeout, numProc int, algorithm string, w io.Writer) error {
 	return ShowResults(total, timeout, w)
 }
 
-func main() {
-	var knownAlgorithms = []string{"sha256", "md5", "gzip"}
+// Validate checks user's parameters.
+func Validate(size, timeout *int, algorithm *string) ([]string, error) {
+	if *size < 1 {
+		return nil, fmt.Errorf("size must be positive, but value is '%d'", *size)
+	}
+	if *timeout < 1 {
+		return nil, fmt.Errorf("timeout must be positive, but value is '%d'", *timeout)
+	}
+	knownAlgorithms := map[string]bool{"sha256": true, "md5": true, "gzip": true}
+	if a := *algorithm; a != "all" {
+		if ok := knownAlgorithms[a]; !ok {
+			return nil, fmt.Errorf("unknown algorithm '%s'", a)
+		}
+		return []string{a}, nil
+	}
+	// use all algorithms
+	items := make([]string, 0, len(knownAlgorithms))
+	for a := range knownAlgorithms {
+		items = append(items, a)
+	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i] < items[j]
+	})
+	return items, nil
+}
 
+func main() {
 	size := flag.Int("s", defaultDataSize, "data size (bytes)")
 	timeout := flag.Int("t", 10, "time duration (seconds)")
 	algorithm := flag.String("a", "sha256", "algorithm (sha256, md5, gzip, all)")
 	flag.Parse()
 
-	if *timeout < 1 {
-		fmt.Printf("ERROR: timeout must be positive, but value is %v\n", *timeout)
-		os.Exit(2)
-	}
-	if *algorithm != "all" {
-		// use only one value
-		knownAlgorithms = []string{*algorithm}
+	knownAlgorithms, err := Validate(size, timeout, algorithm)
+	if err != nil {
+		_, e := fmt.Fprintf(os.Stderr, "ERROR: %s\n", err.Error())
+		if e != nil {
+			panic(e)
+		}
+		os.Exit(1)
 	}
 	numProc := runtime.NumCPU()
 	for _, a := range knownAlgorithms {
-		err := Run(*size, *timeout, numProc, a, os.Stdout)
+		err = Run(*size, *timeout, numProc, a, os.Stdout)
 		if err != nil {
 			fmt.Printf("ERROR: %v\n", err)
 			os.Exit(2)

@@ -95,6 +95,54 @@ $`)
 	}
 }
 
+func TestValidate(t *testing.T) {
+	cases := []struct {
+		s  int
+		t  int
+		a  string
+		e  string   // error message
+		ka []string // expected known algorithms, nil if error
+	}{
+		{0, 0, "", "size must be positive, but value is '0'", nil},
+		{1, 0, "", "timeout must be positive, but value is '0'", nil},
+		{1, 1, "", "unknown algorithm ''", nil},
+		{1, 1, "bad", "unknown algorithm 'bad'", nil},
+		{10, 10, "all", "", []string{"gzip", "md5", "sha256"}},
+		{10, 10, "gzip", "", []string{"gzip"}},
+		{10, 10, "md5", "", []string{"md5"}},
+		{10, 10, "sha256", "", []string{"sha256"}},
+	}
+	for i, c := range cases {
+		ka, err := Validate(&c.s, &c.t, &c.a)
+		if c.e != "" {
+			// expected error
+			if err != nil {
+				if e := err.Error(); e != c.e {
+					t.Errorf("case [%d], unxpected error message: %s", i, e)
+				}
+			} else {
+				t.Errorf("case [%d] there is no expected error", i)
+			}
+		} else {
+			// expected valid case
+			if err != nil {
+				t.Errorf("case [%d] unexpected error: %v", i, err)
+			} else {
+				if n, m := len(ka), len(c.ka); n != m {
+					t.Errorf("case [%d] unexpected length if known algorithms %d != %d", i, n, m)
+				} else {
+					for j, a := range c.ka {
+						if a != ka[j] {
+							t.Errorf("case [%d] failed known algorithm [%d]: '%s' != '%s'", i, j, a, ka[j])
+						}
+					}
+				}
+
+			}
+		}
+	}
+}
+
 func BenchmarkGenerate(b *testing.B) {
 	source := rand.NewSource(int64(time.Nanosecond))
 	for n := 0; n < b.N; n++ {
