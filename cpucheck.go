@@ -160,7 +160,7 @@ func Run(size, timeout, numProc int, algorithm string, w io.Writer) error {
 		return fmt.Errorf("unknown algorithm \"%v\"", algorithm)
 	}
 	err = Printf(err, w, "\nProcessors\t%d\n", numProc)
-	err = Printf(err, w, "Op. system\t%s\n", runtime.GOOS)
+	err = Printf(err, w, "Target OS\t%s\n", runtime.GOOS)
 	err = Printf(err, w, "Architecture\t%s\n", runtime.GOARCH)
 	err = Printf(err, w, "Algorithm\t%s\n", algorithm)
 	err = Printf(err, w, "Data size\t%d bytes\n", size)
@@ -254,7 +254,7 @@ func main() {
 
 	knownAlgorithms, err := Validate(size, timeout, algorithm)
 	if err != nil {
-		_, e := fmt.Fprintf(os.Stderr, "ERROR: %s\n", err.Error())
+		_, e := fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		if e != nil {
 			panic(e)
 		}
@@ -264,7 +264,10 @@ func main() {
 	for _, a := range knownAlgorithms {
 		err = Run(*size, *timeout, numProc, a, os.Stdout)
 		if err != nil {
-			fmt.Printf("ERROR: %v\n", err)
+			_, e := fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+			if e != nil {
+				panic(e)
+			}
 			os.Exit(2)
 		}
 	}
