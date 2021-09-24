@@ -75,7 +75,7 @@ func TestRun(t *testing.T) {
 	}
 	r := regexp.MustCompile(`^
 Processors	\d+
-Op. system	.+
+Target OS	.+
 Architecture	.+
 Algorithm	test
 Data size	8 bytes
